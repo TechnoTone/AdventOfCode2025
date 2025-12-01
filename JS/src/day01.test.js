@@ -18,16 +18,16 @@ test("Part 1 Example", () => {
   expect(part1(EXAMPLE_INPUT)).toBe(3);
 });
 
-// test("Part 1", () => {
-//   const input = new Input(1).fromLines().get();
-//   expect(part1(input)).toBe(2285373);
-// });
+test("Part 1", () => {
+  const input = new Input(1).fromLines().get();
+  expect(part1(input)).toBe(962);
+});
 
-// test("Part 2 Example", () => {
-//   expect(part2(EXAMPLE_INPUT)).toBe(31);
-// });
+test("Part 2 Example", () => {
+  expect(part2(EXAMPLE_INPUT)).toBe(6);
+});
 
-// test("Part 2", () => {
-//   const input = new Input(1).fromLines().get();
-//   expect(part2(input)).toBe(21142653);
-// });
+test("Part 2", () => {
+  const input = new Input(1).fromLines().get();
+  expect(part2(input)).toBe(5782);
+});

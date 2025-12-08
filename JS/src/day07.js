@@ -6,15 +6,19 @@ module.exports.part2 = (input) => countTimelines(parseInput(input));
 
 const parseInput = (input) => ({
   beam: input[0].indexOf("S"),
-  manifold: input.slice(1).map(
-    (line) =>
-      new Set(
-        line
-          .split("")
-          .map((c, ix) => (c === "^" ? ix : -1))
-          .filter((v) => v >= 0)
-      )
-  ),
+  manifold: input
+    .slice(1)
+    .map(
+      (line) =>
+        new Set(
+          line
+            .split("")
+            .map((c, ix) => (c === "^" ? ix : -1))
+            .filter((v) => v >= 0)
+        )
+    )
+    // Minor optimisation - remove empty rows
+    .filter((s) => s.size > 0),
 });
 
 const countSplits = ({ beam, manifold }) =>

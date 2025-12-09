@@ -1,12 +1,10 @@
 const { sum } = require("./utils");
 
-module.exports.part1 = (input) => {
-  return parseRanges(input).map(findInvalidIDs(2)).flat().reduce(sum);
-};
+module.exports.part1 = (input) =>
+  parseRanges(input).map(findInvalidIDs(2)).flat().reduce(sum);
 
-module.exports.part2 = (input) => {
-  return parseRanges(input).map(findInvalidIDs(10)).flat().reduce(sum);
-};
+module.exports.part2 = (input) =>
+  parseRanges(input).map(findInvalidIDs(10)).flat().reduce(sum);
 
 const parseRanges = (input) => input.split(",").map(parseRange);
 const parseRange = (rangeString) => {

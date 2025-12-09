@@ -1,12 +1,9 @@
 const { sum } = require("./utils");
 
-module.exports.part1 = (input) => {
-  return input.map(calculateMaxJoltage(2)).reduce(sum);
-};
+module.exports.part1 = (input) => input.map(calculateMaxJoltage(2)).reduce(sum);
 
-module.exports.part2 = (input) => {
-  return input.map(calculateMaxJoltage(12)).reduce(sum);
-};
+module.exports.part2 = (input) =>
+  input.map(calculateMaxJoltage(12)).reduce(sum);
 
 const calculateMaxJoltage = (count) => (line) => {
   const batteries = [];

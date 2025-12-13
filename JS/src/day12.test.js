@@ -37,7 +37,7 @@ const EXAMPLE_INPUT = [
   "12x5: 1 0 1 0 3 2",
 ];
 
-test.skip("Part 1 Example", () => {
+test("Part 1 Example", () => {
   expect(part1(EXAMPLE_INPUT)).toBe(2);
 });
 

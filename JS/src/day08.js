@@ -2,7 +2,7 @@ const utils = require("./utils");
 
 module.exports.part1 = (input, maxConnections) => {
   const boxes = parseBoxes(input);
-  const pairs = closestPairs(utils.combinations(boxes, 2));
+  const pairs = closestPairs(utils.combinations(boxes));
   const { circuits } = connect(pairs, { maxConnections });
   return circuits
     .toSorted((a, b) => b.size - a.size)
@@ -13,7 +13,7 @@ module.exports.part1 = (input, maxConnections) => {
 
 module.exports.part2 = (input) => {
   const boxes = parseBoxes(input);
-  const pairs = closestPairs(utils.combinations(boxes, 2));
+  const pairs = closestPairs(utils.combinations(boxes));
   const { lastPair } = connect(pairs, { totalBoxes: boxes.length });
   return lastPair.a.x * lastPair.b.x;
 };

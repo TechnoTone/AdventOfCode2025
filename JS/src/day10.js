@@ -1,4 +1,4 @@
-const { sum } = require("./utils");
+const { combinations, memoize, min, sum } = require("./utils");
 
 module.exports.part1 = (input) =>
   input.map(Machine.parseInput).map(configureLights).reduce(sum);
@@ -7,90 +7,32 @@ module.exports.part2 = (input) =>
   input.map(Machine.parseInput).map(configureJoltages).reduce(sum);
 
 const configureLights = (machine) => {
-  const stack = [{ lights: new Lights(machine.lights.length), steps: 0 }];
-  const configurations = new Set(); //used to avoid repetitions
-
-  while (stack.length > 0) {
-    const next = stack.shift();
-
-    if (configurations.has(next.lights.toString())) continue;
-    if (machine.lights.equals(next.lights)) return next.steps;
-
-    configurations.add(next.lights.toString());
-
-    machine.buttons.forEach((b) =>
-      stack.push({
-        lights: next.lights.pressed(b),
-        steps: next.steps + 1,
-      })
-    );
-  }
-
-  throw new Error("No solution found");
-};
-
-const configureJoltages1 = (machine) => {
-  const stack = [{ joltages: new Joltages(machine.joltages.length), steps: 0 }];
-  const configurations = new Set(); //used to avoid repetitions
-
-  while (stack.length > 0) {
-    const next = stack.shift();
-
-    if (configurations.has(next.joltages.toString())) continue;
-    if (next.joltages.exceeds(machine.joltages)) continue;
-    if (machine.joltages.equals(next.joltages)) {
-      return next.steps;
-    }
-
-    configurations.add(next.joltages.toString());
-
-    machine.buttons.forEach((b) =>
-      stack.push({
-        joltages: next.joltages.pressed(b),
-        steps: next.steps + 1,
-      })
-    );
-  }
-
-  throw new Error("No solution found");
+  return machine.lightsLookup
+    .get(machine.lights.toKey())
+    .map(({ presses }) => presses)
+    .reduce((a, b) => Math.min(a, b));
 };
 
 const configureJoltages = (machine) => {
-  const buttons = machine.buttons.toSorted(
-    (a, b) => b.values.length - a.values.length
-  );
-  const stack = [
-    {
-      pressed: [],
-      joltages: new Joltages(machine.joltages.length),
-      buttonsRemaining: buttons,
-    },
-  ];
+  const f = memoize((remainingJoltages) => {
+    if (remainingJoltages.isZero()) return 0; // Finished
 
-  while (stack.length > 0) {
-    const next = stack.shift();
+    const results = machine.lightsLookup
+      .get(remainingJoltages.toLightsKey()) // Returns array of { presses, joltages }
+      ?.filter(({ joltages }) => !joltages.exceeds(remainingJoltages))
+      ?.map(({ presses, joltages }) => ({
+        presses,
+        joltages: remainingJoltages.subtract(joltages),
+      }));
 
-    if (next.joltages.equals(machine.joltages)) {
-      return next.pressed.reduce((total, p) => total + p.presses, 0);
-    }
+    if (results === undefined || results.length === 0) return Infinity; // No eligible moves
 
-    while (next.buttonsRemaining.length > 0) {
-      const button = next.buttonsRemaining.pop();
-      let newJoltages = next.joltages.pressed(button);
-      let presses = 1;
-      while (!newJoltages.exceeds(machine.joltages)) {
-        stack.push({
-          pressed: [...next.pressed, { button, presses }],
-          joltages: newJoltages,
-          buttonsRemaining: [...next.buttonsRemaining],
-        });
-        newJoltages = newJoltages.pressed(button);
-        presses += 1;
-      }
-    }
-  }
+    return results
+      .map(({ presses, joltages }) => presses + 2 * f(joltages.halved()))
+      .reduce(min);
+  });
 
-  throw new Error("No solution found");
+  return f(new Joltages([...machine.joltages.values]));
 };
 
 class Machine {
@@ -118,6 +60,34 @@ class Machine {
             throw new Error(`Unknown section prefix: ${prefix}`);
         }
       });
+
+    const emptyJoltages = new Joltages(this.joltages.length);
+    this.lightsLookup = new Map(); // lightsKey -> [{ presses, joltages }]
+
+    [[], ...combinations(this.buttons)]
+      .map((combo) => ({
+        presses: combo.length,
+        lights: combo
+          .reduce((l, b) => l.pressed(b), new Lights(this.lights.length))
+          .toKey(),
+        joltages: combo.reduce((j, b) => j.pressed(b), emptyJoltages),
+      }))
+      .toSorted((a, b) => a.presses - b.presses) // fewest presses first
+      .forEach(({ presses, lights, joltages }) => {
+        if (this.lightsLookup.has(lights)) {
+          this.lightsLookup.get(lights).push({ presses, joltages });
+        } else {
+          this.lightsLookup.set(lights, [{ presses, joltages }]);
+        }
+      });
+  }
+
+  toString() {
+    return `Machine: ${this.lights} ${this.buttons.join(" ")} ${this.joltages}`;
+  }
+
+  inspect() {
+    return this.toString();
   }
 }
 
@@ -159,8 +129,12 @@ class Lights {
     return this.states.every((state, i) => state === other.states[i]);
   }
 
-  toString() {
+  toKey() {
     return this.states.map((s) => (s ? "#" : ".")).join("");
+  }
+
+  toString() {
+    return `[${this.states.map((s) => (s ? "#" : ".")).join("")}]`;
   }
   inspect() {
     return this.toString();
@@ -208,22 +182,10 @@ class Joltages {
   }
 
   equals(other) {
-    if (this.values === undefined)
-      throw new Error("This joltages object has no values");
-    if (other.values === undefined)
-      throw new Error("Other joltages object has no values");
-    if (this.values.length !== other.values.length)
-      throw new Error("Joltages objects have different lengths");
     return this.values.every((value, i) => value === other.values[i]);
   }
 
   exceeds(other) {
-    if (this.values === undefined)
-      throw new Error("This joltages object has no values");
-    if (other.values === undefined)
-      throw new Error("Other joltages object has no values");
-    if (this.values.length !== other.values.length)
-      throw new Error("Joltages objects have different lengths");
     return this.values.some((value, i) => value > other.values[i]);
   }
 
@@ -233,8 +195,32 @@ class Joltages {
     return newJoltages;
   }
 
+  pressedInv(button) {
+    const newJoltages = new Joltages([...this.values]);
+    button.values.forEach((ix) => (newJoltages.values[ix] -= 1));
+    return newJoltages;
+  }
+
+  subtract(other) {
+    const newJoltages = new Joltages([...this.values]);
+    other.values.forEach((v, ix) => (newJoltages.values[ix] -= v));
+    return newJoltages;
+  }
+
+  halved() {
+    return new Joltages(this.values.map((v) => v / 2));
+  }
+
+  isZero() {
+    return this.values.every((v) => v === 0);
+  }
+
+  toLightsKey() {
+    return this.values.map((v) => (v % 2 === 0 ? "." : "#")).join("");
+  }
+
   toString() {
-    return this.values.join(",");
+    return `{${this.values.join(",")}}`;
   }
   inspect() {
     return this.toString();

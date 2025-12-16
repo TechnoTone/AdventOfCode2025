@@ -74,5 +74,25 @@ module.exports.bronKerbosch = (R, P, X, graph) => {
   return cliques;
 };
 
-module.exports.combinations = (array) =>
+/**
+ * Generates all combinations of pairs from the given array.
+ */
+module.exports.pairs = (array) =>
   array.flatMap((a, i) => array.slice(i + 1).map((b) => [a, b]));
+
+/**
+ * Generates all combinations of any size from the given array.
+ */
+module.exports.combinations = (array) => {
+  const result = [];
+
+  const generate = (start, combo) => {
+    for (let i = start; i < array.length; i++) {
+      const newCombo = combo.concat(array[i]);
+      result.push(newCombo);
+      generate(i + 1, newCombo);
+    }
+  };
+  generate(0, []);
+  return result;
+};

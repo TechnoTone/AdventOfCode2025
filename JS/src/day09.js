@@ -1,8 +1,7 @@
-const utils = require("./utils");
+const { pairs } = require("./utils");
 
 module.exports.part1 = (input) =>
-  utils
-    .combinations(parseCoordinates(input), 2)
+  pairs(parseCoordinates(input), 2)
     .map(([a, b]) => new Area(a, b).size)
     .reduce((max, size) => Math.max(max, size), 0);
 
@@ -10,8 +9,7 @@ module.exports.part2 = (input) => {
   const coordinates = parseCoordinates(input);
   const edges = getEdges(coordinates);
 
-  return utils
-    .combinations(coordinates, 2)
+  return pairs(coordinates, 2)
     .map(([a, b]) => new Area(a, b))
     .toSorted((a, b) => b.size - a.size)
     .find((area) => !area.intersects(edges)).size;

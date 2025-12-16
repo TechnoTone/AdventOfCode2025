@@ -1,20 +1,20 @@
-const utils = require("./utils");
+const { pairs, product } = require("./utils");
 
 module.exports.part1 = (input, maxConnections) => {
   const boxes = parseBoxes(input);
-  const pairs = closestPairs(utils.combinations(boxes));
-  const { circuits } = connect(pairs, { maxConnections });
+  const closest = closestPairs(boxes);
+  const { circuits } = connect(closest, { maxConnections });
   return circuits
     .toSorted((a, b) => b.size - a.size)
     .slice(0, 3)
     .map((c) => c.size)
-    .reduce(utils.product);
+    .reduce(product);
 };
 
 module.exports.part2 = (input) => {
   const boxes = parseBoxes(input);
-  const pairs = closestPairs(utils.combinations(boxes));
-  const { lastPair } = connect(pairs, { totalBoxes: boxes.length });
+  const closest = closestPairs(boxes);
+  const { lastPair } = connect(closest, { totalBoxes: boxes.length });
   return lastPair.a.x * lastPair.b.x;
 };
 
@@ -35,8 +35,8 @@ const parseBox = (line) => {
   return new Box(x, y, z);
 };
 
-const closestPairs = (pairs) =>
-  pairs
+const closestPairs = (boxes) =>
+  pairs(boxes)
     .map(([a, b]) => ({ distance: distance(a, b), a, b }))
     .sort((a, b) => a.distance - b.distance);
 
